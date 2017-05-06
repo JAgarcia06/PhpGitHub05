@@ -1,0 +1,328 @@
+SQL> -- Consultar los grupos de redolog
+SQL> 
+SQL> desc v$log
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ GROUP#                                             NUMBER
+ THREAD#                                            NUMBER
+ SEQUENCE#                                          NUMBER
+ BYTES                                              NUMBER
+ BLOCKSIZE                                          NUMBER
+ MEMBERS                                            NUMBER
+ ARCHIVED                                           VARCHAR2(3)
+ STATUS                                             VARCHAR2(16)
+ FIRST_CHANGE#                                      NUMBER
+ FIRST_TIME                                         DATE
+ NEXT_CHANGE#                                       NUMBER
+ NEXT_TIME                                          DATE
+ CON_ID                                             NUMBER
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         13         50          1 INACTIVE                 
+         0          2         14         50          1 CURRENT                  
+         0          3         12         50          1 INACTIVE                 
+
+SQL> --Obtener informaci¢n de los miembros
+SQL> 
+SQL> desc v$logfile
+ Name                                      Null?    Type
+ ----------------------------------------- -------- ----------------------------
+ GROUP#                                             NUMBER
+ STATUS                                             VARCHAR2(7)
+ TYPE                                               VARCHAR2(7)
+ MEMBER                                             VARCHAR2(513)
+ IS_RECOVERY_DEST_FILE                              VARCHAR2(3)
+ CON_ID                                             NUMBER
+
+SQL> column member a40
+SP2-0158: unknown COLUMN option "a40"
+SQL> column member format a40
+SQL> SELECT con_id, group#, member
+  2  FROM v$logfile;
+
+    CON_ID     GROUP# MEMBER                                                    
+---------- ---------- ----------------------------------------                  
+         0          3 E:\APP\ORACLE\ORADATA\ERP\REDO03.LOG                      
+         0          2 E:\APP\ORACLE\ORADATA\ERP\REDO02.LOG                      
+         0          1 E:\APP\ORACLE\ORADATA\ERP\REDO01.LOG                      
+
+SQL> ALTER SYSTEM SWITCH LOGFILE;
+
+System altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         13         50          1 INACTIVE                 
+         0          2         14         50          1 ACTIVE                   
+         0          3         15         50          1 CURRENT                  
+
+SQL> --Crear el grupo 4 con 2 miembros. El tama¤o de espacio usado en disco ser  de 150 MB
+SQL> ALTER DATABASE
+  2  ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO', 'E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO')
+  3  SIZE 150m;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         13         50          1 INACTIVE                 
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 CURRENT                  
+         0          4          0        150          2 UNUSED                   
+
+SQL> SELECT con_id, group#, member
+  2  ALTER SYSTEM SWITCH LOGFILE;
+ALTER SYSTEM SWITCH LOGFILE
+*
+ERROR at line 2:
+ORA-00923: FROM keyword not found where expected 
+
+
+SQL> SELECT con_id, group#, member
+  2  FROM v$logfile;
+
+    CON_ID     GROUP# MEMBER                                                    
+---------- ---------- ----------------------------------------                  
+         0          3 E:\APP\ORACLE\ORADATA\ERP\REDO03.LOG                      
+         0          2 E:\APP\ORACLE\ORADATA\ERP\REDO02.LOG                      
+         0          1 E:\APP\ORACLE\ORADATA\ERP\REDO01.LOG                      
+         0          4 E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO                      
+         0          4 E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO                      
+
+SQL> --Eliminando el grupo 4
+SQL> 
+SQL> ALTER DATABASE
+  2  DROP LOGFILE GROUP 4;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         13         50          1 INACTIVE                 
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 CURRENT                  
+
+SQL> ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO', 'E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO')
+SP2-0734: unknown command beginning "ADD LOGFIL..." - rest of line ignored.
+SQL> 
+SQL> 
+SQL> ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO', 'E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO')
+SP2-0734: unknown command beginning "ADD LOGFIL..." - rest of line ignored.
+SQL> ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO', 'E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO')
+SP2-0734: unknown command beginning "ADD LOGFIL..." - rest of line ignored.
+SQL> ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO',
+SP2-0734: unknown command beginning "ADD LOGFIL..." - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> ALTER DATABASE
+  2  ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO4A.RDO', 'E:\APP\ORACLE\ORADATA\ERP\REDO4B.RDO')
+  3  SIZE 75m;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         13         50          1 INACTIVE                 
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 CURRENT                  
+         0          4          0         75          2 UNUSED                   
+
+SQL> ALTER SYSTEM SWITCH LOGFILE;
+
+System altered.
+
+SQL> ALTER SYSTEM SWITCH LOGFILE;
+
+System altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 ACTIVE                   
+         0          4         16         75          2 ACTIVE                   
+
+SQL> ALTER DATABASE
+  2  DROP LOGFILE GROUP 1;
+ALTER DATABASE
+*
+ERROR at line 1:
+ORA-01623: log 1 is current log for instance erp (thread 1) - cannot drop 
+ORA-00312: online log 1 thread 1: 'E:\APP\ORACLE\ORADATA\ERP\REDO01.LOG' 
+
+
+SQL> DROP LOGFILE GROUP 3;
+DROP LOGFILE GROUP 3
+     *
+ERROR at line 1:
+ORA-00950: invalid DROP option 
+
+
+SQL> ALTER DATABASE
+  2  DROP LOGFILE GROUP 3;
+ALTER DATABASE
+*
+ERROR at line 1:
+ORA-01624: log 3 needed for crash recovery of instance erp (thread 1) 
+ORA-00312: online log 3 thread 1: 'E:\APP\ORACLE\ORADATA\ERP\REDO03.LOG' 
+
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+         0          4         16         75          2 INACTIVE                 
+
+SQL> ALTER DATABASE
+  2  DROP LOGFILE GROUP 4;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+
+SQL> -- Crear el grupo 8 con 1 miembro. El tama¤o disponible ser  de 80MB
+SQL> 
+SQL> -- Crear el grupo 8 con 1 miembro. El tama¤o disponible ser  de 80MB
+SQL> 
+SQL> ALTER DATABASE
+  2  ADD LOGFILE GROUP 4 ('E:\APP\ORACLE\ORADATA\ERP\REDO8A.RDO')
+  3  SIZE 80m;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+         0          4          0         80          1 UNUSED                   
+
+SQL> ALTER DATABASE
+  2  DROP LOGFILE GROUP 4;
+
+Database altered.
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE GROUP 8 ('E:\APP\ORACLE\ORADATA\ERP\REDO8A.RDO')
+  3  SIZE 80m;
+ALTER DATABASE
+*
+ERROR at line 1:
+ORA-00301: error in adding log file 'E:\APP\ORACLE\ORADATA\ERP\REDO8A.RDO' - 
+file cannot be created 
+ORA-27038: created file already exists 
+OSD-04010: <create> option specified, file already exists 
+
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE GROUP 8 ('E:\APP\ORACLE\ORADATA\ERP\REDO8A.RDO')
+  3  SIZE 80m;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+         0          8          0         80          1 UNUSED                   
+
+SQL> --Agregar un nuevo miembro de redolog al grupo 8 con el nombre redo8b.rdo
+SQL> 
+SQL> ALTER DATABASE
+  2  ADD LOGFILE MEMBER 'E:\APP\ORACLE\ORADATA\ERP\REDO8B.RDO'
+  3  TO GROUP 8;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          1 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+         0          8          0         80          2 UNUSED                   
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE MEMBER 'E:\APP\ORACLE\ORADATA\ERP\REDO8B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO'
+  3  TO GROUP 1;
+ALTER DATABASE
+*
+ERROR at line 1:
+ORA-01577: cannot add log file 'E:\APP\ORACLE\ORADATA\ERP\REDO8B.RDO' - file 
+already part of database 
+
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE MEMBER0 ('E:\APP\ORACLE\ORADATA\ERP\REDO8B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO')
+  3  TO GROUP 1;
+ADD LOGFILE MEMBER0 ('E:\APP\ORACLE\ORADATA\ERP\REDO8B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO')
+            *
+ERROR at line 2:
+ORA-00933: SQL command not properly ended 
+
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE MEMBER0 ('E:\APP\ORACLE\ORADATA\ERP\REDO1B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO')
+  3  TO GROUP 1;
+ADD LOGFILE MEMBER0 ('E:\APP\ORACLE\ORADATA\ERP\REDO1B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO')
+            *
+ERROR at line 2:
+ORA-00933: SQL command not properly ended 
+
+
+SQL> ALTER DATABASE
+  2  ADD LOGFILE MEMBER 'E:\APP\ORACLE\ORADATA\ERP\REDO1B.RDO','E:\APP\ORACLE\ORADATA\ERP\REDO1C.RDO'
+  3  TO GROUP 1;
+
+Database altered.
+
+SQL> select con_id, group#, sequence#, bytes/1024/1024 as MB, members, status
+  2  FROM v$log;
+
+    CON_ID     GROUP#  SEQUENCE#         MB    MEMBERS STATUS                   
+---------- ---------- ---------- ---------- ---------- ----------------         
+         0          1         17         50          3 CURRENT                  
+         0          2         14         50          1 INACTIVE                 
+         0          3         15         50          1 INACTIVE                 
+         0          8          0         80          2 UNUSED                   
+
+SQL> SPOOL OFF
